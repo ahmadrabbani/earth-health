@@ -16,9 +16,8 @@ class CommunityController extends Controller
     public function index(Request $request)
     {
         $tablesReady = Schema::hasTable('community_posts') && Schema::hasTable('community_comments');
-        $guard = auth('auth0-session');
         $auth0Configured = $this->auth0Configured();
-        $communityUser = $auth0Configured && $guard->check() ? $guard->user() : null;
+        $communityUser = $auth0Configured ? auth('auth0-session')->user() : null;
 
         $posts = collect();
         $stats = [
@@ -96,7 +95,8 @@ class CommunityController extends Controller
 
     protected function auth0Configured(): bool
     {
-        return filled(config('auth0.guards.default.domain'))
+        return filled(config('auth.guards.auth0-session'))
+            && filled(config('auth0.guards.default.domain'))
             && filled(config('auth0.guards.default.clientId'))
             && filled(config('auth0.guards.default.clientSecret'));
     }

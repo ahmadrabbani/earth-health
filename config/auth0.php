@@ -5,10 +5,14 @@ declare(strict_types=1);
 use Auth0\Laravel\Configuration;
 use Auth0\SDK\Configuration\SdkConfiguration;
 
+$auth0Enabled = filled(env('AUTH0_DOMAIN'))
+    && filled(env('AUTH0_CLIENT_ID'))
+    && filled(env('AUTH0_CLIENT_SECRET'));
+
 return Configuration::VERSION_2 + [
-    'registerGuards' => true,
-    'registerMiddleware' => true,
-    'registerAuthenticationRoutes' => true,
+    'registerGuards' => $auth0Enabled,
+    'registerMiddleware' => $auth0Enabled,
+    'registerAuthenticationRoutes' => $auth0Enabled,
     'configurationPath' => null,
 
     'guards' => [
