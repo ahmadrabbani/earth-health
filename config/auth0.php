@@ -12,7 +12,7 @@ $auth0Enabled = filled(env('AUTH0_DOMAIN'))
 return Configuration::VERSION_2 + [
     'registerGuards' => $auth0Enabled,
     'registerMiddleware' => $auth0Enabled,
-    'registerAuthenticationRoutes' => $auth0Enabled,
+    'registerAuthenticationRoutes' => false,
     'configurationPath' => null,
 
     'guards' => [
