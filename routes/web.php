@@ -14,9 +14,21 @@ use App\Http\Controllers\Api\AirQualityController;
 use App\Http\Controllers\Api\AiRecommendationController;
 use App\Http\Controllers\Api\LocationSearchController;
 
+$clearAuth0State = static function (\Illuminate\Http\Request $request): void {
+    if (! $request->hasSession()) {
+        return;
+    }
+
+    $request->session()->forget([
+        'auth0_logged_in',
+        'auth0_session',
+        'auth0_transient',
+    ]);
+};
+
 Route::get('/', [DashboardController::class, 'index'])->name('home');
 
-Route::middleware('web')->group(function () {
+Route::middleware('web')->group(function () use ($clearAuth0State) {
     Route::get('/login', function (\Illuminate\Http\Request $request, Auth0LoginController $controller) {
         $auth0Configured = filled(config('auth.guards.auth0-session'))
             && filled(config('auth0.guards.default.domain'))
@@ -28,6 +40,8 @@ Route::middleware('web')->group(function () {
                 ->route('home')
                 ->with('status', 'Auth0 is not configured for this environment yet.');
         }
+
+        $clearAuth0State($request);
 
         if ($request->hasSession()) {
             $request->session()->invalidate();
@@ -52,6 +66,8 @@ Route::middleware('web')->group(function () {
         } catch (InvalidTokenException|StateException $exception) {
             report($exception);
 
+            $clearAuth0State($request);
+
             if ($request->hasSession()) {
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
@@ -66,10 +82,8 @@ Route::middleware('web')->group(function () {
     Route::get('/logout', function (
         \Illuminate\Http\Request $request,
         Auth0LogoutController $controller
-    ) {
-        if ($request->hasSession()) {
-            $request->session()->forget('auth0_logged_in');
-        }
+    ) use ($clearAuth0State) {
+        $clearAuth0State($request);
 
         return $controller($request);
     })->name('logout');

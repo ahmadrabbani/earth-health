@@ -73,6 +73,8 @@ return Configuration::VERSION_2 + [
             Configuration::CONFIG_SESSION_STORAGE_ID => Configuration::get(Configuration::CONFIG_SESSION_STORAGE_ID),
             Configuration::CONFIG_TRANSIENT_STORAGE => Configuration::get(Configuration::CONFIG_TRANSIENT_STORAGE),
             Configuration::CONFIG_TRANSIENT_STORAGE_ID => Configuration::get(Configuration::CONFIG_TRANSIENT_STORAGE_ID),
+            'persistAccessToken' => filter_var(env('AUTH0_PERSIST_ACCESS_TOKEN', false), FILTER_VALIDATE_BOOL),
+            'queryUserInfo' => filter_var(env('AUTH0_QUERY_USER_INFO', true), FILTER_VALIDATE_BOOL),
         ],
     ],
 
