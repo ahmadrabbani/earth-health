@@ -9,6 +9,9 @@ $auth0Enabled = filled(env('AUTH0_DOMAIN'))
     && filled(env('AUTH0_CLIENT_ID'))
     && filled(env('AUTH0_CLIENT_SECRET'));
 
+$appSubfolder = rtrim((string) env('APP_SUBFOLDER', ''), '/');
+$routePrefix = $appSubfolder !== '' ? $appSubfolder : '';
+
 return Configuration::VERSION_2 + [
     'registerGuards' => $auth0Enabled,
     'registerMiddleware' => $auth0Enabled,
@@ -61,11 +64,11 @@ return Configuration::VERSION_2 + [
     ],
 
     'routes' => [
-        Configuration::CONFIG_ROUTE_INDEX => Configuration::get(Configuration::CONFIG_ROUTE_INDEX, '/'),
-        Configuration::CONFIG_ROUTE_CALLBACK => Configuration::get(Configuration::CONFIG_ROUTE_CALLBACK, '/callback'),
-        Configuration::CONFIG_ROUTE_LOGIN => Configuration::get(Configuration::CONFIG_ROUTE_LOGIN, '/login'),
-        Configuration::CONFIG_ROUTE_AFTER_LOGIN => Configuration::get(Configuration::CONFIG_ROUTE_AFTER_LOGIN, '/'),
-        Configuration::CONFIG_ROUTE_LOGOUT => Configuration::get(Configuration::CONFIG_ROUTE_LOGOUT, '/logout'),
-        Configuration::CONFIG_ROUTE_AFTER_LOGOUT => Configuration::get(Configuration::CONFIG_ROUTE_AFTER_LOGOUT, '/'),
+        Configuration::CONFIG_ROUTE_INDEX => Configuration::get(Configuration::CONFIG_ROUTE_INDEX, $routePrefix . '/'),
+        Configuration::CONFIG_ROUTE_CALLBACK => Configuration::get(Configuration::CONFIG_ROUTE_CALLBACK, $routePrefix . '/callback'),
+        Configuration::CONFIG_ROUTE_LOGIN => Configuration::get(Configuration::CONFIG_ROUTE_LOGIN, $routePrefix . '/login'),
+        Configuration::CONFIG_ROUTE_AFTER_LOGIN => Configuration::get(Configuration::CONFIG_ROUTE_AFTER_LOGIN, $routePrefix . '/'),
+        Configuration::CONFIG_ROUTE_LOGOUT => Configuration::get(Configuration::CONFIG_ROUTE_LOGOUT, $routePrefix . '/logout'),
+        Configuration::CONFIG_ROUTE_AFTER_LOGOUT => Configuration::get(Configuration::CONFIG_ROUTE_AFTER_LOGOUT, $routePrefix . '/'),
     ],
 ];
