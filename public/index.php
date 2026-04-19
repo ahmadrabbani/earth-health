@@ -5,6 +5,16 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
+// Support deployments mounted under a web subfolder such as /earth-health.
+$subfolder = rtrim((string) ($_ENV['APP_SUBFOLDER'] ?? $_SERVER['APP_SUBFOLDER'] ?? getenv('APP_SUBFOLDER') ?: ''), '/');
+
+if ($subfolder !== '' && isset($_SERVER['REQUEST_URI']) && str_starts_with($_SERVER['REQUEST_URI'], $subfolder)) {
+    $normalizedUri = substr($_SERVER['REQUEST_URI'], strlen($subfolder));
+    $_SERVER['REQUEST_URI'] = $normalizedUri !== '' ? $normalizedUri : '/';
+    $_SERVER['PHP_SELF'] = '/index.php';
+    $_SERVER['SCRIPT_NAME'] = '/index.php';
+}
+
 // Determine if the application is in maintenance mode...
 if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
     require $maintenance;
