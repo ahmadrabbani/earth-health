@@ -4,6 +4,7 @@ use Auth0\Laravel\Controllers\CallbackController as Auth0CallbackController;
 use Auth0\Laravel\Controllers\LoginController as Auth0LoginController;
 use Auth0\Laravel\Controllers\LogoutController as Auth0LogoutController;
 use Auth0\SDK\Exception\InvalidTokenException;
+use Auth0\SDK\Exception\StateException;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\CommunityController;
@@ -46,6 +47,15 @@ Route::middleware('web')->group(function () {
             return redirect()
                 ->route('login')
                 ->with('status', 'Your login session expired. Please try signing in again.');
+        } catch (StateException $exception) {
+            report($exception);
+
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()
+                ->route('login')
+                ->with('status', 'Your login request became out of sync. Please try signing in again.');
         }
     })->name('callback');
 
