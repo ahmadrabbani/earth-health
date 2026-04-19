@@ -448,6 +448,44 @@
             flex-shrink: 0;
         }
 
+        .map-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .location-map {
+            min-height: 360px;
+            border-radius: 1.35rem;
+            overflow: hidden;
+            border: 1px solid rgba(18, 33, 23, 0.08);
+            background: linear-gradient(180deg, rgba(240, 248, 242, 0.96) 0%, rgba(233, 242, 255, 0.96) 100%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        }
+
+        .map-caption {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .map-caption-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.65rem 0.9rem;
+            border-radius: 999px;
+            border: 1px solid rgba(18, 33, 23, 0.08);
+            background: rgba(255, 255, 255, 0.78);
+            color: var(--muted);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .map-caption-chip i {
+            color: var(--primary);
+        }
+
         .faq-accordion {
             --bs-accordion-border-color: transparent;
             --bs-accordion-btn-bg: transparent;
@@ -893,17 +931,59 @@
                                 <div class="mt-4">
                                     <p class="section-kicker mb-2">Nearby Miyawaki opportunities</p>
                                     @if (!empty($nearbyCandidates))
-                                        <div class="content-list">
-                                            @foreach ($nearbyCandidates as $candidate)
-                                                <div class="content-list-item">
-                                                    <span class="content-list-icon"><i class="bi bi-geo-alt-fill"></i></span>
-                                                    <div>
-                                                        <p class="fw-semibold mb-1">{{ $candidate['name'] ?? 'Nearby site' }}</p>
-                                                        <p class="mb-1 text-secondary">{{ $candidate['address'] ?? 'Address unavailable' }}</p>
-                                                        <p class="mb-0 small text-secondary">{{ $candidate['reason'] ?? 'Potential Miyawaki planting location' }}</p>
-                                                    </div>
+                                        @php
+                                            $mapCenter = [
+                                                'name' => $latestAssessment->location?->name ?: 'Assessed location',
+                                                'latitude' => (float) ($latestAssessment->location?->latitude ?? 0),
+                                                'longitude' => (float) ($latestAssessment->location?->longitude ?? 0),
+                                            ];
+
+                                            $mapCandidates = collect($nearbyCandidates)
+                                                ->filter(fn (array $candidate) => filled($candidate['latitude'] ?? null) && filled($candidate['longitude'] ?? null))
+                                                ->map(fn (array $candidate, int $index) => [
+                                                    'id' => 'candidate-' . $index,
+                                                    'name' => $candidate['name'] ?? 'Nearby site',
+                                                    'address' => $candidate['address'] ?? 'Address unavailable',
+                                                    'reason' => $candidate['reason'] ?? 'Potential Miyawaki planting location',
+                                                    'latitude' => (float) $candidate['latitude'],
+                                                    'longitude' => (float) $candidate['longitude'],
+                                                ])
+                                                ->values();
+                                        @endphp
+
+                                        <div class="row g-4 align-items-start">
+                                            <div class="col-xl-6">
+                                                <div class="content-list">
+                                                    @foreach ($nearbyCandidates as $candidate)
+                                                        <div class="content-list-item">
+                                                            <span class="content-list-icon"><i class="bi bi-geo-alt-fill"></i></span>
+                                                            <div>
+                                                                <p class="fw-semibold mb-1">{{ $candidate['name'] ?? 'Nearby site' }}</p>
+                                                                <p class="mb-1 text-secondary">{{ $candidate['address'] ?? 'Address unavailable' }}</p>
+                                                                <p class="mb-0 small text-secondary">{{ $candidate['reason'] ?? 'Potential Miyawaki planting location' }}</p>
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
                                                 </div>
-                                            @endforeach
+                                            </div>
+                                            <div class="col-xl-6">
+                                                @if ($mapCandidates->isNotEmpty() && $mapCenter['latitude'] && $mapCenter['longitude'])
+                                                    <div class="map-panel">
+                                                        <div id="nearbyLocationMap"
+                                                            class="location-map"
+                                                            data-center='@json($mapCenter)'
+                                                            data-candidates='@json($mapCandidates)'></div>
+                                                        <div class="map-caption">
+                                                            <span class="map-caption-chip"><i class="bi bi-bullseye"></i> Assessment center</span>
+                                                            <span class="map-caption-chip"><i class="bi bi-pin-map-fill"></i> Suggested Miyawaki sites</span>
+                                                        </div>
+                                                    </div>
+                                                @else
+                                                    <div class="empty-state">
+                                                        Map pins will appear here when suggested locations include coordinate data.
+                                                    </div>
+                                                @endif
+                                            </div>
                                         </div>
                                     @else
                                         <div class="empty-state">
@@ -1092,5 +1172,91 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script>
+        function initNearbyLocationMap() {
+            const mapElement = document.getElementById('nearbyLocationMap');
+
+            if (!mapElement || !window.google || !window.google.maps) {
+                return;
+            }
+
+            const center = JSON.parse(mapElement.dataset.center || '{}');
+            const candidates = JSON.parse(mapElement.dataset.candidates || '[]');
+
+            if (!center.latitude || !center.longitude) {
+                return;
+            }
+
+            const map = new google.maps.Map(mapElement, {
+                center: {
+                    lat: Number(center.latitude),
+                    lng: Number(center.longitude),
+                },
+                zoom: candidates.length ? 13 : 14,
+                mapTypeControl: false,
+                streetViewControl: false,
+                fullscreenControl: false,
+                styles: [
+                    { featureType: 'poi.business', stylers: [{ visibility: 'off' }] },
+                    { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+                ],
+            });
+
+            const bounds = new google.maps.LatLngBounds();
+            const infoWindow = new google.maps.InfoWindow();
+
+            const centerMarker = new google.maps.Marker({
+                position: { lat: Number(center.latitude), lng: Number(center.longitude) },
+                map,
+                title: center.name || 'Assessment center',
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 10,
+                    fillColor: '#1f7a53',
+                    fillOpacity: 1,
+                    strokeColor: '#ffffff',
+                    strokeWeight: 3,
+                },
+            });
+
+            bounds.extend(centerMarker.getPosition());
+
+            centerMarker.addListener('click', () => {
+                infoWindow.setContent(
+                    `<div style="max-width:220px"><strong>${center.name || 'Assessment center'}</strong><br><span style="color:#5d6d63">Assessment location</span></div>`
+                );
+                infoWindow.open({ anchor: centerMarker, map });
+            });
+
+            candidates.forEach((candidate, index) => {
+                const marker = new google.maps.Marker({
+                    position: { lat: Number(candidate.latitude), lng: Number(candidate.longitude) },
+                    map,
+                    title: candidate.name || `Suggested site ${index + 1}`,
+                    label: {
+                        text: String(index + 1),
+                        color: '#ffffff',
+                        fontWeight: '700',
+                    },
+                });
+
+                bounds.extend(marker.getPosition());
+
+                marker.addListener('click', () => {
+                    infoWindow.setContent(
+                        `<div style="max-width:260px"><strong>${candidate.name || 'Nearby site'}</strong><br><span style="color:#5d6d63">${candidate.address || 'Address unavailable'}</span><br><span style="color:#14563b">${candidate.reason || 'Potential Miyawaki planting location'}</span></div>`
+                    );
+                    infoWindow.open({ anchor: marker, map });
+                });
+            });
+
+            if (candidates.length) {
+                map.fitBounds(bounds, 64);
+            }
+        }
+    </script>
+    @if (config('services.google.maps_key'))
+        <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ urlencode(config('services.google.maps_key')) }}&callback=initNearbyLocationMap"></script>
+    @endif
 </body>
 </html>

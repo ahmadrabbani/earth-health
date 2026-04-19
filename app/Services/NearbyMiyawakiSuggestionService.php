@@ -29,7 +29,7 @@ class NearbyMiyawakiSuggestionService
             try {
                 $response = Http::withHeaders([
                     'X-Goog-Api-Key' => $apiKey,
-                    'X-Goog-FieldMask' => 'places.displayName,places.formattedAddress,places.primaryType',
+                    'X-Goog-FieldMask' => 'places.displayName,places.formattedAddress,places.primaryType,places.location',
                     'Content-Type' => 'application/json',
                 ])->post('https://places.googleapis.com/v1/places:searchNearby', [
                     'includedTypes' => [$placeType],
@@ -56,6 +56,8 @@ class NearbyMiyawakiSuggestionService
                         'address' => data_get($place, 'formattedAddress'),
                         'type' => data_get($place, 'primaryType', $placeType),
                         'reason' => $reason,
+                        'latitude' => data_get($place, 'location.latitude'),
+                        'longitude' => data_get($place, 'location.longitude'),
                     ])
                     ->filter(fn (array $place) => filled($place['name']) || filled($place['address']));
 
