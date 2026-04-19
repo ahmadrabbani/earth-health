@@ -655,7 +655,16 @@
         $auth0Configured = filled(config('auth0.guards.default.domain'))
             && filled(config('auth0.guards.default.clientId'))
             && filled(config('auth0.guards.default.clientSecret'));
-        $communityUser = $auth0Configured ? auth('auth0-session')->user() : null;
+        $communityUser = null;
+
+        if ($auth0Configured) {
+            try {
+                $communityUser = auth('auth0-session')->user();
+            } catch (\Throwable $exception) {
+                report($exception);
+                $communityUser = null;
+            }
+        }
         $loginUrl = url('/login');
         $logoutUrl = url('/logout');
     @endphp

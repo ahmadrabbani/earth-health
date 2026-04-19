@@ -17,7 +17,7 @@ class CommunityController extends Controller
     {
         $tablesReady = Schema::hasTable('community_posts') && Schema::hasTable('community_comments');
         $auth0Configured = $this->auth0Configured();
-        $communityUser = $auth0Configured ? auth('auth0-session')->user() : null;
+        $communityUser = $this->safeCurrentUser();
 
         $posts = collect();
         $stats = [
@@ -86,6 +86,21 @@ class CommunityController extends Controller
     protected function currentUser(): ?Authenticatable
     {
         return auth('auth0-session')->user();
+    }
+
+    protected function safeCurrentUser(): ?Authenticatable
+    {
+        if (! $this->auth0Configured()) {
+            return null;
+        }
+
+        try {
+            return auth('auth0-session')->user();
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return null;
+        }
     }
 
     protected function displayName(?Authenticatable $user): string
