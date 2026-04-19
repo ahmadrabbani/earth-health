@@ -11,6 +11,19 @@ $auth0Enabled = filled(env('AUTH0_DOMAIN'))
 
 $appSubfolder = rtrim((string) env('APP_SUBFOLDER', ''), '/');
 $routePrefix = $appSubfolder !== '' ? $appSubfolder : '';
+$defaultIndexRoute = $routePrefix . '/';
+$defaultCallbackRoute = $routePrefix . '/callback';
+$defaultLoginRoute = $routePrefix . '/login';
+$defaultAfterLoginRoute = $routePrefix . '/community';
+$defaultLogoutRoute = $routePrefix . '/logout';
+$defaultAfterLogoutRoute = $routePrefix . '/';
+
+$routeIndex = env('AUTH0_INDEX', Configuration::get(Configuration::CONFIG_ROUTE_INDEX, $defaultIndexRoute));
+$routeCallback = env('AUTH0_CALLBACK', env('AUTH0_ROUTE_CALLBACK', Configuration::get(Configuration::CONFIG_ROUTE_CALLBACK, $defaultCallbackRoute)));
+$routeLogin = env('AUTH0_LOGIN', env('AUTH0_ROUTE_LOGIN', Configuration::get(Configuration::CONFIG_ROUTE_LOGIN, $defaultLoginRoute)));
+$routeAfterLogin = env('AUTH0_AFTER_LOGIN', env('AUTH0_ROUTE_AFTER_LOGIN', Configuration::get(Configuration::CONFIG_ROUTE_AFTER_LOGIN, $defaultAfterLoginRoute)));
+$routeLogout = env('AUTH0_LOGOUT', env('AUTH0_ROUTE_LOGOUT', Configuration::get(Configuration::CONFIG_ROUTE_LOGOUT, $defaultLogoutRoute)));
+$routeAfterLogout = env('AUTH0_AFTER_LOGOUT', env('AUTH0_ROUTE_AFTER_LOGOUT', Configuration::get(Configuration::CONFIG_ROUTE_AFTER_LOGOUT, $defaultAfterLogoutRoute)));
 
 return Configuration::VERSION_2 + [
     'registerGuards' => $auth0Enabled,
@@ -64,11 +77,11 @@ return Configuration::VERSION_2 + [
     ],
 
     'routes' => [
-        Configuration::CONFIG_ROUTE_INDEX => Configuration::get(Configuration::CONFIG_ROUTE_INDEX, $routePrefix . '/'),
-        Configuration::CONFIG_ROUTE_CALLBACK => Configuration::get(Configuration::CONFIG_ROUTE_CALLBACK, $routePrefix . '/callback'),
-        Configuration::CONFIG_ROUTE_LOGIN => Configuration::get(Configuration::CONFIG_ROUTE_LOGIN, $routePrefix . '/login'),
-        Configuration::CONFIG_ROUTE_AFTER_LOGIN => Configuration::get(Configuration::CONFIG_ROUTE_AFTER_LOGIN, $routePrefix . '/'),
-        Configuration::CONFIG_ROUTE_LOGOUT => Configuration::get(Configuration::CONFIG_ROUTE_LOGOUT, $routePrefix . '/logout'),
-        Configuration::CONFIG_ROUTE_AFTER_LOGOUT => Configuration::get(Configuration::CONFIG_ROUTE_AFTER_LOGOUT, $routePrefix . '/'),
+        Configuration::CONFIG_ROUTE_INDEX => $routeIndex,
+        Configuration::CONFIG_ROUTE_CALLBACK => $routeCallback,
+        Configuration::CONFIG_ROUTE_LOGIN => $routeLogin,
+        Configuration::CONFIG_ROUTE_AFTER_LOGIN => $routeAfterLogin,
+        Configuration::CONFIG_ROUTE_LOGOUT => $routeLogout,
+        Configuration::CONFIG_ROUTE_AFTER_LOGOUT => $routeAfterLogout,
     ],
 ];

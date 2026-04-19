@@ -18,19 +18,24 @@ Route::get('/', [DashboardController::class, 'index'])->name('home');
 
 Route::middleware('web')->group(function () {
     Route::get('/login', function (\Illuminate\Http\Request $request, Auth0LoginController $controller) {
-    $auth0Configured = filled(config('auth.guards.auth0-session'))
-        && filled(config('auth0.guards.default.domain'))
-        && filled(config('auth0.guards.default.clientId'))
-        && filled(config('auth0.guards.default.clientSecret'));
+        $auth0Configured = filled(config('auth.guards.auth0-session'))
+            && filled(config('auth0.guards.default.domain'))
+            && filled(config('auth0.guards.default.clientId'))
+            && filled(config('auth0.guards.default.clientSecret'));
 
-    if (! $auth0Configured) {
-        return redirect()
-            ->route('home')
-            ->with('status', 'Auth0 is not configured for this environment yet.');
-    }
+        if (! $auth0Configured) {
+            return redirect()
+                ->route('home')
+                ->with('status', 'Auth0 is not configured for this environment yet.');
+        }
 
-    return $controller($request);
-})->name('login');
+        if ($request->hasSession()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
+        return $controller($request);
+    })->name('login');
 
     Route::get('/callback', function (
         \Illuminate\Http\Request $request,
@@ -41,13 +46,14 @@ Route::middleware('web')->group(function () {
         } catch (InvalidTokenException|StateException $exception) {
             report($exception);
 
-            // optional: clear bad session only after failure
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+            if ($request->hasSession()) {
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
 
             return redirect()
-                ->route('login')
-                ->with('status', 'Your login session expired. Please try signing in again.');
+                ->route('home')
+                ->with('status', 'Your login session expired. Start a fresh sign-in from the page.');
         }
     })->name('callback');
 
