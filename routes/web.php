@@ -26,9 +26,38 @@ $clearAuth0State = static function (\Illuminate\Http\Request $request): void {
     ]);
 };
 
+$stripAuth0AccessToken = static function (\Illuminate\Http\Request $request): bool {
+    if (! $request->hasSession()) {
+        return false;
+    }
+
+    $payload = $request->session()->get('auth0_session');
+
+    if (! is_string($payload) || $payload === '') {
+        return false;
+    }
+
+    $decoded = json_decode($payload, true);
+
+    if (! is_array($decoded) || empty($decoded['user'])) {
+        return false;
+    }
+
+    unset(
+        $decoded['accessToken'],
+        $decoded['accessTokenScope'],
+        $decoded['accessTokenExpiration']
+    );
+
+    $request->session()->put('auth0_session', json_encode($decoded, JSON_THROW_ON_ERROR));
+    $request->session()->put('auth0_logged_in', true);
+
+    return true;
+};
+
 Route::get('/', [DashboardController::class, 'index'])->name('home');
 
-Route::middleware('web')->group(function () use ($clearAuth0State) {
+Route::middleware('web')->group(function () use ($clearAuth0State, $stripAuth0AccessToken) {
     Route::get('/login', function (\Illuminate\Http\Request $request, Auth0LoginController $controller) use ($clearAuth0State) {
         $auth0Configured = filled(config('auth.guards.auth0-session'))
             && filled(config('auth0.guards.default.domain'))
@@ -54,7 +83,7 @@ Route::middleware('web')->group(function () use ($clearAuth0State) {
     Route::get('/callback', function (
         \Illuminate\Http\Request $request,
         Auth0CallbackController $controller
-    ) use ($clearAuth0State) {
+    ) use ($clearAuth0State, $stripAuth0AccessToken) {
         try {
             $response = $controller($request);
 
@@ -63,7 +92,24 @@ Route::middleware('web')->group(function () use ($clearAuth0State) {
             }
 
             return $response;
-        } catch (InvalidTokenException|StateException $exception) {
+        } catch (InvalidTokenException $exception) {
+            report($exception);
+
+            if ($stripAuth0AccessToken($request)) {
+                return redirect()->to(config('auth0.routes.afterLogin', route('community.index')));
+            }
+
+            $clearAuth0State($request);
+
+            if ($request->hasSession()) {
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
+
+            return redirect()
+                ->route('home')
+                ->with('status', 'Your login session expired. Start a fresh sign-in from the page.');
+        } catch (StateException $exception) {
             report($exception);
 
             $clearAuth0State($request);
