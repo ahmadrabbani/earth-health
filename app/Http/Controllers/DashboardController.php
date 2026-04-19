@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Assessment;
 use App\Models\AiRecommendation;
+use App\Models\CommunityComment;
+use App\Models\CommunityPost;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 
@@ -21,6 +23,13 @@ class DashboardController extends Controller
             'average_green_score' => null,
         ];
         $recentRecommendations = collect();
+        $communityPreview = collect();
+        $communityStats = [
+            'posts' => 0,
+            'comments' => 0,
+            'contributors' => 0,
+        ];
+        $communityReady = Schema::hasTable('community_posts') && Schema::hasTable('community_comments');
 
         if ($tablesReady) {
             $latestAssessment = Assessment::with([
@@ -45,11 +54,28 @@ class DashboardController extends Controller
                 ->get();
         }
 
+        if ($communityReady) {
+            $communityPreview = CommunityPost::query()
+                ->withCount('comments')
+                ->latest()
+                ->take(3)
+                ->get();
+
+            $communityStats = [
+                'posts' => CommunityPost::count(),
+                'comments' => CommunityComment::count(),
+                'contributors' => CommunityPost::distinct('auth0_user_id')->count('auth0_user_id'),
+            ];
+        }
+
         return view('welcome', [
             'latestAssessment' => $latestAssessment,
             'stats' => $stats,
             'recentRecommendations' => $recentRecommendations,
             'tablesReady' => $tablesReady,
+            'communityPreview' => $communityPreview,
+            'communityStats' => $communityStats,
+            'communityReady' => $communityReady,
         ]);
     }
 }

@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
+use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LocationAssessmentController;
 use App\Http\Controllers\Api\AirQualityController;
@@ -15,6 +16,17 @@ Route::get('/assess', [LocationAssessmentController::class, 'create'])
 
 Route::post('/assess', [LocationAssessmentController::class, 'store'])
     ->name('assess.location.store');
+
+Route::get('/community', [CommunityController::class, 'index'])
+    ->name('community.index');
+
+Route::middleware('auth:auth0-session')->group(function () {
+    Route::post('/community/posts', [CommunityController::class, 'store'])
+        ->name('community.posts.store');
+
+    Route::post('/community/posts/{post}/comments', [CommunityController::class, 'comment'])
+        ->name('community.comments.store');
+});
 
 Route::prefix('api')->group(function () {
     Route::post('/air-quality', [AirQualityController::class, 'show']);

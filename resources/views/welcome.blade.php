@@ -651,6 +651,15 @@
     </style>
 </head>
 <body>
+    @php
+        $auth0Configured = filled(config('auth0.guards.default.domain'))
+            && filled(config('auth0.guards.default.clientId'))
+            && filled(config('auth0.guards.default.clientSecret'));
+        $communityUser = $auth0Configured ? auth('auth0-session')->user() : null;
+        $loginUrl = url('/login');
+        $logoutUrl = url('/logout');
+    @endphp
+
     <div class="page-shell">
         <div class="site-container py-4 py-lg-5">
             <nav class="glass-nav px-3 px-lg-4 py-3 d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 mb-4 mb-lg-5">
@@ -665,7 +674,15 @@
                 </div>
                 <div class="d-flex flex-wrap align-items-center gap-2">
                     <a href="#insights" class="btn btn-sm btn-light border rounded-pill px-3">Insights</a>
+                    <a href="{{ route('community.index') }}" class="btn btn-sm btn-light border rounded-pill px-3">Community</a>
                     <a href="#faq" class="btn btn-sm btn-light border rounded-pill px-3">FAQ</a>
+                    @if ($auth0Configured)
+                        @if ($communityUser)
+                            <a href="{{ $logoutUrl }}" class="btn btn-sm btn-light border rounded-pill px-3">Logout</a>
+                        @else
+                            <a href="{{ $loginUrl }}" class="btn btn-sm btn-light border rounded-pill px-3">Login</a>
+                        @endif
+                    @endif
                     <a href="{{ route('assess.location') }}" class="btn btn-success rounded-pill px-3">Start assessment</a>
                 </div>
             </nav>
@@ -685,9 +702,9 @@
                                 <i class="bi bi-arrow-up-right-circle"></i>
                                 Run a new assessment
                             </a>
-                            <a href="#insights" class="btn-secondary-hero">
-                                <i class="bi bi-bar-chart-line"></i>
-                                Explore live insights
+                            <a href="{{ route('community.index') }}" class="btn-secondary-hero">
+                                <i class="bi bi-people-fill"></i>
+                                {{ $communityUser ? 'Join the community' : 'Explore community ideas' }}
                             </a>
                         </div>
 
@@ -1060,6 +1077,80 @@
                                         <p class="mb-0 text-secondary">Return to the homepage to review usage stats, latest outcomes, and recommendation history in one place.</p>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section-space">
+                <div class="row g-4 align-items-start">
+                    <div class="col-lg-5">
+                        <div class="surface-card h-100 p-4 p-lg-5">
+                            <p class="section-kicker mb-2">Community intelligence</p>
+                            <h2 class="section-title fw-bold">Pair environmental data with local knowledge from real people.</h2>
+                            <p class="section-copy mb-4">GreenLens now includes a community hub where planners, residents, and sustainability teams can discuss site conditions, Miyawaki opportunities, and greening ideas around specific locations.</p>
+
+                            <div class="content-list mb-4">
+                                <div class="content-list-item">
+                                    <span class="content-list-icon"><i class="bi bi-shield-lock-fill"></i></span>
+                                    <div>
+                                        <p class="fw-semibold mb-1">Identity through Auth0</p>
+                                        <p class="mb-0 text-secondary">Participation is tied to authenticated accounts so the discussion space feels more credible and less anonymous.</p>
+                                    </div>
+                                </div>
+                                <div class="content-list-item">
+                                    <span class="content-list-icon"><i class="bi bi-chat-square-dots-fill"></i></span>
+                                    <div>
+                                        <p class="fw-semibold mb-1">Grounded discussion</p>
+                                        <p class="mb-0 text-secondary">Posts can capture field observations, local constraints, and practical planting suggestions that raw metrics alone cannot show.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex flex-wrap gap-3">
+                                <a href="{{ route('community.index') }}" class="btn btn-success rounded-pill px-4 py-3 fw-semibold">Open community hub</a>
+                                @if ($auth0Configured && ! $communityUser)
+                                    <a href="{{ $loginUrl }}" class="btn btn-light border rounded-pill px-4 py-3 fw-semibold">Login with Auth0</a>
+                                @elseif ($communityUser)
+                                    <a href="{{ route('community.index') }}#start-post" class="btn btn-light border rounded-pill px-4 py-3 fw-semibold">Start a discussion</a>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-7">
+                        <div class="surface-card h-100 p-4 p-lg-5">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+                                <div>
+                                    <p class="section-kicker mb-2">Latest conversations</p>
+                                    <h2 class="h4 fw-bold mb-0">What the community is discussing</h2>
+                                </div>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <span class="meta-chip"><i class="bi bi-chat-square-text-fill"></i> {{ number_format($communityStats['posts']) }} posts</span>
+                                    <span class="meta-chip"><i class="bi bi-reply-fill"></i> {{ number_format($communityStats['comments']) }} replies</span>
+                                    <span class="meta-chip"><i class="bi bi-people-fill"></i> {{ number_format($communityStats['contributors']) }} contributors</span>
+                                </div>
+                            </div>
+
+                            <div class="timeline-card">
+                                @forelse ($communityPreview as $post)
+                                    <div class="timeline-item">
+                                        <div class="d-flex align-items-start justify-content-between gap-3 mb-2">
+                                            <div>
+                                                <p class="fw-semibold mb-1">{{ $post->title }}</p>
+                                                <p class="small text-secondary mb-0">{{ $post->author_name }}{{ $post->location_name ? ' • ' . $post->location_name : '' }}</p>
+                                            </div>
+                                            <span class="meta-chip"><i class="bi bi-chat-dots-fill"></i> {{ $post->comments_count }} replies</span>
+                                        </div>
+                                        <p class="text-secondary mb-2">{{ \Illuminate\Support\Str::limit($post->body, 165) }}</p>
+                                        <a href="{{ route('community.index') }}#post-{{ $post->id }}" class="small fw-semibold text-success">View discussion</a>
+                                    </div>
+                                @empty
+                                    <div class="empty-state">
+                                        No community posts yet. Open the community hub to start the first discussion around a location, air quality issue, or Miyawaki opportunity.
+                                    </div>
+                                @endforelse
                             </div>
                         </div>
                     </div>
