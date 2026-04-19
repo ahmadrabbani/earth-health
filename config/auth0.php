@@ -9,8 +9,35 @@ $auth0Enabled = filled(env('AUTH0_DOMAIN'))
     && filled(env('AUTH0_CLIENT_ID'))
     && filled(env('AUTH0_CLIENT_SECRET'));
 
+$appUrl = rtrim((string) env('APP_URL', ''), '/');
+$appUrlPath = trim((string) parse_url($appUrl, PHP_URL_PATH), '/');
 $appSubfolder = rtrim((string) env('APP_SUBFOLDER', ''), '/');
-$routePrefix = $appSubfolder !== '' ? $appSubfolder : '';
+$routePrefix = $appSubfolder !== '' && $appUrlPath === trim($appSubfolder, '/')
+    ? ''
+    : ($appSubfolder !== '' ? $appSubfolder : '');
+
+$normalizeAuth0Route = static function (string $route) use ($appSubfolder, $appUrlPath): string {
+    if ($route === '') {
+        return $route;
+    }
+
+    if ($appSubfolder === '' || $appUrlPath !== trim($appSubfolder, '/')) {
+        return $route;
+    }
+
+    $subfolder = trim($appSubfolder, '/');
+    $normalized = '/' . ltrim($route, '/');
+
+    if ($subfolder !== '' && str_starts_with($normalized, '/' . $subfolder . '/')) {
+        return substr($normalized, strlen('/' . $subfolder)) ?: '/';
+    }
+
+    if ($subfolder !== '' && $normalized === '/' . $subfolder) {
+        return '/';
+    }
+
+    return $normalized;
+};
 $defaultIndexRoute = $routePrefix . '/';
 $defaultCallbackRoute = $routePrefix . '/callback';
 $defaultLoginRoute = $routePrefix . '/login';
@@ -18,12 +45,12 @@ $defaultAfterLoginRoute = $routePrefix . '/community';
 $defaultLogoutRoute = $routePrefix . '/logout';
 $defaultAfterLogoutRoute = $routePrefix . '/';
 
-$routeIndex = env('AUTH0_INDEX', Configuration::get(Configuration::CONFIG_ROUTE_INDEX, $defaultIndexRoute));
-$routeCallback = env('AUTH0_CALLBACK', env('AUTH0_ROUTE_CALLBACK', Configuration::get(Configuration::CONFIG_ROUTE_CALLBACK, $defaultCallbackRoute)));
-$routeLogin = env('AUTH0_LOGIN', env('AUTH0_ROUTE_LOGIN', Configuration::get(Configuration::CONFIG_ROUTE_LOGIN, $defaultLoginRoute)));
-$routeAfterLogin = env('AUTH0_AFTER_LOGIN', env('AUTH0_ROUTE_AFTER_LOGIN', Configuration::get(Configuration::CONFIG_ROUTE_AFTER_LOGIN, $defaultAfterLoginRoute)));
-$routeLogout = env('AUTH0_LOGOUT', env('AUTH0_ROUTE_LOGOUT', Configuration::get(Configuration::CONFIG_ROUTE_LOGOUT, $defaultLogoutRoute)));
-$routeAfterLogout = env('AUTH0_AFTER_LOGOUT', env('AUTH0_ROUTE_AFTER_LOGOUT', Configuration::get(Configuration::CONFIG_ROUTE_AFTER_LOGOUT, $defaultAfterLogoutRoute)));
+$routeIndex = $normalizeAuth0Route((string) env('AUTH0_INDEX', Configuration::get(Configuration::CONFIG_ROUTE_INDEX, $defaultIndexRoute)));
+$routeCallback = $normalizeAuth0Route((string) env('AUTH0_CALLBACK', env('AUTH0_ROUTE_CALLBACK', Configuration::get(Configuration::CONFIG_ROUTE_CALLBACK, $defaultCallbackRoute))));
+$routeLogin = $normalizeAuth0Route((string) env('AUTH0_LOGIN', env('AUTH0_ROUTE_LOGIN', Configuration::get(Configuration::CONFIG_ROUTE_LOGIN, $defaultLoginRoute))));
+$routeAfterLogin = $normalizeAuth0Route((string) env('AUTH0_AFTER_LOGIN', env('AUTH0_ROUTE_AFTER_LOGIN', Configuration::get(Configuration::CONFIG_ROUTE_AFTER_LOGIN, $defaultAfterLoginRoute))));
+$routeLogout = $normalizeAuth0Route((string) env('AUTH0_LOGOUT', env('AUTH0_ROUTE_LOGOUT', Configuration::get(Configuration::CONFIG_ROUTE_LOGOUT, $defaultLogoutRoute))));
+$routeAfterLogout = $normalizeAuth0Route((string) env('AUTH0_AFTER_LOGOUT', env('AUTH0_ROUTE_AFTER_LOGOUT', Configuration::get(Configuration::CONFIG_ROUTE_AFTER_LOGOUT, $defaultAfterLogoutRoute))));
 
 return Configuration::VERSION_2 + [
     'registerGuards' => $auth0Enabled,
