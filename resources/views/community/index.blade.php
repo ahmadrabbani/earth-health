@@ -232,7 +232,7 @@
 </head>
 <body>
     @php
-        $hasCommunitySession = $communityUser || session()->boolean('auth0_logged_in');
+        $hasCommunitySession = $communityUser || (bool) session('auth0_logged_in', false);
         $loginUrl = url('/login');
         $logoutUrl = url('/logout');
     @endphp
