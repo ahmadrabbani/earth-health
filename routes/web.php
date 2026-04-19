@@ -16,7 +16,8 @@ use App\Http\Controllers\Api\LocationSearchController;
 
 Route::get('/', [DashboardController::class, 'index'])->name('home');
 
-Route::get('/login', function (\Illuminate\Http\Request $request, Auth0LoginController $controller) {
+Route::middleware('web')->group(function () {
+    Route::get('/login', function (\Illuminate\Http\Request $request, Auth0LoginController $controller) {
     $auth0Configured = filled(config('auth.guards.auth0-session'))
         && filled(config('auth0.guards.default.domain'))
         && filled(config('auth0.guards.default.clientId'))
@@ -30,6 +31,33 @@ Route::get('/login', function (\Illuminate\Http\Request $request, Auth0LoginCont
 
     return $controller($request);
 })->name('login');
+
+    Route::get('/callback', function (
+        \Illuminate\Http\Request $request,
+        Auth0CallbackController $controller
+    ) {
+        try {
+            return $controller($request);
+        } catch (InvalidTokenException|StateException $exception) {
+            report($exception);
+
+            // optional: clear bad session only after failure
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()
+                ->route('login')
+                ->with('status', 'Your login session expired. Please try signing in again.');
+        }
+    })->name('callback');
+
+    Route::get('/logout', function (
+        \Illuminate\Http\Request $request,
+        Auth0LogoutController $controller
+    ) {
+        return $controller($request);
+    })->name('logout');
+});
 
 Route::get('/assess', [LocationAssessmentController::class, 'create'])
     ->name('assess.location');
