@@ -17,7 +17,10 @@ use App\Http\Controllers\Api\LocationSearchController;
 Route::get('/', [DashboardController::class, 'index'])->name('home');
 
 Route::middleware('web')->group(function () {
-    Route::get('/login', function (\Illuminate\Http\Request $request, Auth0LoginController $controller) {
+    Route::get('/login', function (
+        \Illuminate\Http\Request $request,
+        Auth0LoginController $controller
+    ) {
         $auth0Configured = filled(config('auth.guards.auth0-session'))
             && filled(config('auth0.guards.default.domain'))
             && filled(config('auth0.guards.default.clientId'))
@@ -29,37 +32,33 @@ Route::middleware('web')->group(function () {
                 ->with('status', 'Auth0 is not configured for this environment yet.');
         }
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
+        // Do NOT invalidate the session here.
         return $controller($request);
     })->name('login');
 
-    Route::get('/callback', function (\Illuminate\Http\Request $request, Auth0CallbackController $controller) {
+    Route::get('/callback', function (
+        \Illuminate\Http\Request $request,
+        Auth0CallbackController $controller
+    ) {
         try {
             return $controller($request);
-        } catch (InvalidTokenException $exception) {
+        } catch (InvalidTokenException|StateException $exception) {
             report($exception);
 
+            // optional: clear bad session only after failure
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
             return redirect()
                 ->route('login')
                 ->with('status', 'Your login session expired. Please try signing in again.');
-        } catch (StateException $exception) {
-            report($exception);
-
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-
-            return redirect()
-                ->route('login')
-                ->with('status', 'Your login request became out of sync. Please try signing in again.');
         }
     })->name('callback');
 
-    Route::get('/logout', function (\Illuminate\Http\Request $request, Auth0LogoutController $controller) {
+    Route::get('/logout', function (
+        \Illuminate\Http\Request $request,
+        Auth0LogoutController $controller
+    ) {
         return $controller($request);
     })->name('logout');
 });
