@@ -29,7 +29,7 @@ $clearAuth0State = static function (\Illuminate\Http\Request $request): void {
 Route::get('/', [DashboardController::class, 'index'])->name('home');
 
 Route::middleware('web')->group(function () use ($clearAuth0State) {
-    Route::get('/login', function (\Illuminate\Http\Request $request, Auth0LoginController $controller) {
+    Route::get('/login', function (\Illuminate\Http\Request $request, Auth0LoginController $controller) use ($clearAuth0State) {
         $auth0Configured = filled(config('auth.guards.auth0-session'))
             && filled(config('auth0.guards.default.domain'))
             && filled(config('auth0.guards.default.clientId'))
@@ -54,7 +54,7 @@ Route::middleware('web')->group(function () use ($clearAuth0State) {
     Route::get('/callback', function (
         \Illuminate\Http\Request $request,
         Auth0CallbackController $controller
-    ) {
+    ) use ($clearAuth0State) {
         try {
             $response = $controller($request);
 
