@@ -42,7 +42,13 @@ Route::middleware('web')->group(function () {
         Auth0CallbackController $controller
     ) {
         try {
-            return $controller($request);
+            $response = $controller($request);
+
+            if ($request->hasSession()) {
+                $request->session()->put('auth0_logged_in', true);
+            }
+
+            return $response;
         } catch (InvalidTokenException|StateException $exception) {
             report($exception);
 
@@ -61,6 +67,10 @@ Route::middleware('web')->group(function () {
         \Illuminate\Http\Request $request,
         Auth0LogoutController $controller
     ) {
+        if ($request->hasSession()) {
+            $request->session()->forget('auth0_logged_in');
+        }
+
         return $controller($request);
     })->name('logout');
 });

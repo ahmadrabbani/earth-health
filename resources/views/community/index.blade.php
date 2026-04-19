@@ -232,6 +232,7 @@
 </head>
 <body>
     @php
+        $hasCommunitySession = $communityUser || session()->boolean('auth0_logged_in');
         $loginUrl = url('/login');
         $logoutUrl = url('/logout');
     @endphp
@@ -253,6 +254,8 @@
                     @if ($auth0Configured)
                         @if ($communityUser)
                             <span class="meta-chip"><i class="bi bi-person-check-fill"></i> {{ $communityUser->name ?? $communityUser->email ?? 'Signed in' }}</span>
+                            <a href="{{ $logoutUrl }}" class="btn btn-success rounded-pill px-3">Logout</a>
+                        @elseif ($hasCommunitySession)
                             <a href="{{ $logoutUrl }}" class="btn btn-success rounded-pill px-3">Logout</a>
                         @else
                             <a href="{{ $loginUrl }}" class="btn btn-success rounded-pill px-3">Login with Auth0</a>

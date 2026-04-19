@@ -665,6 +665,7 @@
                 $communityUser = null;
             }
         }
+        $hasCommunitySession = $communityUser || session()->boolean('auth0_logged_in');
         $loginUrl = url('/login');
         $logoutUrl = url('/logout');
     @endphp
@@ -686,7 +687,7 @@
                     <a href="{{ route('community.index') }}" class="btn btn-sm btn-light border rounded-pill px-3">Community</a>
                     <a href="#faq" class="btn btn-sm btn-light border rounded-pill px-3">FAQ</a>
                     @if ($auth0Configured)
-                        @if ($communityUser)
+                        @if ($hasCommunitySession)
                             <a href="{{ $logoutUrl }}" class="btn btn-sm btn-light border rounded-pill px-3">Logout</a>
                         @else
                             <a href="{{ $loginUrl }}" class="btn btn-sm btn-light border rounded-pill px-3">Login</a>
