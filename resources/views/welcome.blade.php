@@ -783,29 +783,29 @@
                     <div class="col-lg-5">
                         <div class="pe-lg-4">
                             <p class="section-kicker mb-2">Why teams choose GreenLens</p>
-                            <h2 class="section-title fw-bold">A cleaner, more credible way to present environmental intelligence.</h2>
-                            <p class="section-copy mb-4">The homepage now reads like a real product experience: clear messaging, stronger structure, modern visual hierarchy, and conversion-focused sections that guide visitors from understanding to action.</p>
+                            <h2 class="section-title fw-bold">Turn location data into practical urban greening decisions.</h2>
+                            <p class="section-copy mb-4">GreenLens helps teams evaluate air quality, estimate planting opportunity, and turn raw site inputs into credible recommendations for healthier, greener places.</p>
 
                             <div class="content-list">
                                 <div class="content-list-item">
                                     <span class="content-list-icon"><i class="bi bi-check2-circle"></i></span>
                                     <div>
-                                        <p class="fw-semibold mb-1">Built for clarity</p>
-                                        <p class="mb-0 text-secondary">Assessment results, recommendation summaries, and supporting context are easy to scan without feeling crowded.</p>
+                                        <p class="fw-semibold mb-1">Grounded in local conditions</p>
+                                        <p class="mb-0 text-secondary">Each assessment combines location inputs, air quality signals, and site context to build recommendations that reflect real environmental conditions.</p>
                                     </div>
                                 </div>
                                 <div class="content-list-item">
                                     <span class="content-list-icon"><i class="bi bi-layers"></i></span>
                                     <div>
-                                        <p class="fw-semibold mb-1">Structured for trust</p>
-                                        <p class="mb-0 text-secondary">Cards, spacing, contrast, and typography are tuned to feel professional and reliable for public-facing use.</p>
+                                        <p class="fw-semibold mb-1">Designed for action</p>
+                                        <p class="mb-0 text-secondary">Tree estimates, Miyawaki feasibility, and improvement guidance are organized so planners can move from assessment to intervention quickly.</p>
                                     </div>
                                 </div>
                                 <div class="content-list-item">
                                     <span class="content-list-icon"><i class="bi bi-phone"></i></span>
                                     <div>
-                                        <p class="fw-semibold mb-1">Responsive by default</p>
-                                        <p class="mb-0 text-secondary">The layout adapts cleanly from large screens down to mobile without broken sections or uneven alignment.</p>
+                                        <p class="fw-semibold mb-1">Useful for reporting</p>
+                                        <p class="mb-0 text-secondary">The dashboard turns technical outputs into summaries that are easier to share with leadership, partners, and sustainability stakeholders.</p>
                                     </div>
                                 </div>
                             </div>
